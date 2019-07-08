@@ -5,25 +5,28 @@ const httpTrigger: AzureFunction = async function(
   req: HttpRequest
 ): Promise<void> {
   context.log("HTTP trigger function processed a request.");
-  console.log("hey anybody");
   const name = req.query.name || (req.body && req.body.name);
 
-  if (name) {
+  let params: URLSearchParams = new URLSearchParams();
+  params.set("scope", "read");
+  params.set("response_type", "code");
+  params.set("client_id", context.bindings.client_id);
+  params.set("redirect_uri", context.bindings.oauth_callback);
+
+  let rep: Response = this.http.get(context.bindings.authorize_url, {
+    search: params
+  });
+  if (rep.status == 200) {
     context.res = {
       // status: 200, /* Defaults to 200 */
-      body: "Hello " + (req.query.name || req.body.name)
+      body: "Welcome"
     };
   } else {
     context.res = {
       status: 400,
-      body: "Please pass a name on the query string or in the request body"
+      body: "There was a problem with the oauth2 kickoff flow"
     };
   }
 };
-
-// google-site-verification=ZkUSn1hjfEiYE25RnclfdLtV5nAVlHSYM9lxqX51AAw
-
-// oauth2 guide: https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-protect-backend-with-aad
-// client id: fed197f3-9839-4bf4-b3d9-7b073a26b160
 
 export default httpTrigger;
